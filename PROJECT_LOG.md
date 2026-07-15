@@ -1,10 +1,23 @@
-Day 1
-✓ Phase 0 Complete
-✓ Phase 1 Complete
+# VisionAnnotator AI - Project Log
 
-Day 2
-✓ Video Upload
-✓ YOLO Detection
+## Day 1 (15 July 2026)
 
-Day 3
-✓ ByteTrack
+### ✅ Phase 0 - Environment Setup
+- VS Code Installed
+- Python Verified
+- Git Verified
+- Virtual Environment Created
+- Packages Installed
+
+### ✅ Phase 1 - FastAPI Backend
+- Project Structure Created
+- FastAPI Running
+- Browser Test Passed
+
+### ✅ Git
+- Initial Commit Completed
+
+---
+
+## Day 2
+- ⏳ Phase 2 - Video Upload API
