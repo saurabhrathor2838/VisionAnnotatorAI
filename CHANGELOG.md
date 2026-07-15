@@ -14,3 +14,9 @@ All notable changes to VisionAnnotator AI will be documented in this file.
 - Initial project structure
 - First API endpoint (`/`)
 - Project documentation
+## Version 0.2.0 - Video Upload
+
+### Added
+- Video upload API
+- Uploads folder support
+- Browser upload testing

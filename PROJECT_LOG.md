@@ -19,5 +19,7 @@
 
 ---
 
-## Day 2
-- ⏳ Phase 2 - Video Upload API
+### ✅ Phase 2 - Video Upload API
+- Upload endpoint created
+- Browser upload tested
+- Video successfully saved to uploads folder
