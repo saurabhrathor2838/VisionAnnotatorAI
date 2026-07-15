@@ -1,0 +1,25 @@
+# Virtual Environment
+venv/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+
+# VS Code
+.vscode/
+
+# AI Models
+*.pt
+
+# Uploaded Videos
+backend/uploads/
+
+# Processed Videos
+backend/outputs/
+
+# Environment Variables
+.env
+
+# OS Files
+Thumbs.db
+.DS_Store
