@@ -1,0 +1,27 @@
+.app {
+  padding: 30px;
+  font-family: Arial, sans-serif;
+}
+
+header {
+  text-align: center;
+}
+
+.dashboard {
+  display: flex;
+  gap: 20px;
+  margin-top: 40px;
+}
+
+.card {
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 10px;
+  width: 30%;
+}
+
+button {
+  margin: 5px;
+  padding: 10px 15px;
+  cursor: pointer;
+}
