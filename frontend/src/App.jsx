@@ -1,131 +1,94 @@
 import { useState } from "react";
-import "./App.css";
+import axios from "axios";
+import AnnotationWorkspace from "./pages/AnnotationWorkspace";
 
 function App() {
-
   const [video, setVideo] = useState(null);
-  const [result, setResult] = useState("");
+  const [result, setResult] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState("Waiting...");
 
   const uploadVideo = async () => {
-
     if (!video) {
-      alert("Please select video first");
+      alert("Please select a video first");
       return;
     }
 
     const formData = new FormData();
     formData.append("file", video);
 
-    try {
+    setUploadProgress(0);
+    setUploadStatus("Uploading...");
 
-      const response = await fetch(
+    try {
+      const response = await axios.post(
         "http://127.0.0.1:8000/upload",
+        formData,
         {
-          method: "POST",
-          body: formData
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+
+          onUploadProgress: (progressEvent) => {
+            const percent = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+
+            setUploadProgress(percent);
+          },
         }
       );
 
+      const data = response.data;
 
-      const data = await response.json();
+const stats = {
+  totalFrames: data.detections.length,
+  totalObjects: 0,
+  classCounts: {},
+};
 
-      setResult(JSON.stringify(data, null, 2));
+data.detections.forEach((frame) => {
+  stats.totalObjects += frame.objects.length;
 
+  frame.objects.forEach((obj) => {
+    const label = obj.label;
 
-    } catch (error) {
-
-      console.log(error);
-      setResult("Upload failed. Backend connection error.");
-
+    if (!stats.classCounts[label]) {
+      stats.classCounts[label] = 0;
     }
 
+    stats.classCounts[label]++;
+  });
+});
+
+setResult({
+  ...data,
+  stats,
+});
+      setUploadProgress(100);
+      setUploadStatus("Completed ✅");
+    } catch (error) {
+      console.error(error);
+      setResult("Upload failed. Backend connection error.");
+      setUploadStatus("Failed ❌");
+    }
   };
 
-
   return (
-
-    <div className="app">
-
-      <header>
-        <h1>VisionAnnotatorAI</h1>
-        <p>
-          AI Powered Video Annotation Platform
-        </p>
-      </header>
-
-
-      <section className="dashboard">
-
-
-        <div className="card">
-
-          <h2>Upload Video</h2>
-
-
-          <input
-            type="file"
-            accept="video/*"
-            onChange={(e) =>
-              setVideo(e.target.files[0])
-            }
-          />
-
-
-          <button onClick={uploadVideo}>
-            Upload
-          </button>
-
-
-        </div>
-
-
-
-        <div className="card">
-
-          <h2>Annotation Mode</h2>
-
-
-          <button>
-            Manual
-          </button>
-
-
-          <button>
-            AI Assisted
-          </button>
-
-
-          <button>
-            Fully Automatic
-          </button>
-
-
-        </div>
-
-
-
-
-        <div className="card">
-
-          <h2>Detection Result</h2>
-
-
-          <pre>
-            {result || "Waiting for video processing..."}
-          </pre>
-
-
-        </div>
-
-
-      </section>
-
-
-    </div>
-
-  );
-
+    <AnnotationWorkspace
+  video={video}
+  setVideo={setVideo}
+  uploadVideo={uploadVideo}
+  result={result}
+  uploadProgress={uploadProgress}
+  uploadStatus={uploadStatus}
+  processedVideo={
+  result?.processed_video
+    ? `http://127.0.0.1:8000/${result.processed_video.replace(/\\/g, "/")}`
+    : null
 }
-
+/>
+  );
+}
 
 export default App;
