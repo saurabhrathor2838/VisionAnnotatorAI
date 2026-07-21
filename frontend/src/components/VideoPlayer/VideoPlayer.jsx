@@ -1,9 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import VideoControls from "./VideoControls";
+import AnnotationCanvas from "../Annotation/AnnotationCanvas";
 import "./VideoPlayer.css";
 
 function VideoPlayer({ video, processedVideo }) {
   const videoRef = useRef(null);
+  const [videoSize, setVideoSize] = useState({
+  width: 640,
+  height: 360,
+});
 
   const [showProcessed, setShowProcessed] = useState(false);
 
@@ -221,6 +226,11 @@ const handleLoadedMetadata = () => {
 
   const total = Math.floor(videoDuration * FPS);
   setTotalFrames(total);
+
+  setVideoSize({
+    width: videoRef.current.clientWidth,
+    height: videoRef.current.clientHeight,
+  });
 };
 
   const handleTimeUpdate = () => {
@@ -270,6 +280,7 @@ const handleLoadedMetadata = () => {
 </button>
       </div>
 
+<div className="video-wrapper">
       <video
     key={currentSource}
     ref={videoRef}
@@ -277,10 +288,13 @@ const handleLoadedMetadata = () => {
     controls={false}
     preload="metadata"
     style={{
-        width: "100%",
-        maxHeight: "650px",
-        background: "#000",
-    }}
+    display: "block",
+    maxWidth: "100%",
+    maxHeight: "650px",
+    width: "auto",
+    height: "auto",
+    background: "#000",
+}}
     onLoadedMetadata={handleLoadedMetadata}
     onPlay={handlePlay}
     onPause={handlePause}
@@ -291,6 +305,14 @@ const handleLoadedMetadata = () => {
         console.log(e.target.error);
     }}
 />
+
+ <AnnotationCanvas
+  width={videoSize.width}
+  height={videoSize.height}
+  video={video}
+/>
+
+</div>
 
       <VideoControls
       isPlaying={isPlaying}
