@@ -1,5 +1,10 @@
+import { DEFAULT_ANNOTATION } from "./AnnotationDefaults";
 import React, { useRef, useEffect, useState } from "react";
 import { getAnnotationAtPoint } from "./SelectionUtils";
+import {
+  saveAnnotations,
+  loadAnnotations,
+} from "./AnnotationStorage";
 
 function getResizeHandle(box, x, y) {
 
@@ -46,10 +51,21 @@ function getResizeHandle(box, x, y) {
   return null;
 }
 
-function AnnotationCanvas({ width, height, video }) {
-  const canvasRef = useRef(null);
+function AnnotationCanvas({
+  width,
+  height,
+  video,
 
-  const [annotations, setAnnotations] = useState([]);
+  annotations,
+  setAnnotations,
+
+  selectedAnnotation,
+  setSelectedAnnotation,
+
+  labelSettings
+}) {
+  const canvasRef = useRef(null);
+  
   // ==========================
 // Undo / Redo History
 // ==========================
@@ -60,7 +76,11 @@ const [history, setHistory] = useState([
 
 const [historyIndex, setHistoryIndex] = useState(0);
 
-const [redoIndex, setRedoIndex] = useState(0);
+const videoId =
+  video?.name ||
+  video?.fileName ||
+  video?.src ||
+  "default_video";
 
 // ==========================
 // Save History Snapshot
@@ -94,28 +114,53 @@ const saveHistory = (newAnnotations) => {
 };
    useEffect(() => {
 
-  if(!video) return;
+  if (!video) return;
+
+  const saved = loadAnnotations(videoId);
 
 
-  // New video load hone par clear
+const loadedAnnotations = Array.isArray(saved)
+  ? saved
+  : saved?.annotations || [];
 
-  setAnnotations([]);
 
-  setHistory([
-    []
-  ]);
+setAnnotations(loadedAnnotations);
+
+
+setHistory([
+  JSON.parse(JSON.stringify(loadedAnnotations))
+]);
 
   setHistoryIndex(0);
 
-
-}, [video]);
+}, [video, videoId]);
 
   const [drawing, setDrawing] = useState(false);
 
   const [currentBox, setCurrentBox] = useState(null);
 
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  
+  // ==========================
+// Label Display Settings
+// ==========================
+
+  useEffect(() => {
+
+  if (selectedIndex === -1) {
+    setSelectedAnnotation(null);
+    return;
+  }
+
+  setSelectedAnnotation(
+    annotations[selectedIndex]
+  );
+
+}, [
+  selectedIndex,
+  annotations,
+  setSelectedAnnotation
+]);
+
   const [isMoving, setIsMoving] = useState(false);
   const [moveOffset, setMoveOffset] = useState(null);
   const [resizeHandle, setResizeHandle] = useState(null);
@@ -126,6 +171,9 @@ const saveHistory = (newAnnotations) => {
   // Mouse Down
   // ==========================
   const handleMouseDown = (e) => {
+      if (e.target !== canvasRef.current) {
+        return;
+     }
     const rect = canvasRef.current.getBoundingClientRect();
 
     const x = e.clientX - rect.left;
@@ -182,12 +230,17 @@ setSelectedIndex(-1);
     setDrawing(true);
 
     setCurrentBox({
-        x,
-        y,
-        width: 0,
-        height: 0,
-        label: "Object"
-    });
+    ...DEFAULT_ANNOTATION,
+
+    id: Date.now(),
+
+    x,
+    y,
+
+    width: 0,
+    height: 0,
+});
+
 };
 
   // ==========================
@@ -380,6 +433,112 @@ if (isMoving) {
 
 };
   // ==========================
+// Label Text Generator
+// ==========================
+
+function getLabelText(box, settings){
+
+  let labels = [];
+
+
+  if(
+    settings.fields.objectName &&
+    box.objectName
+  ){
+    labels.push(
+  "Object: " + box.objectName
+);
+  }
+
+
+  if(
+    settings.fields.status &&
+    box.status
+  ){
+    labels.push("Status: " + box.status);
+  }
+
+
+  if(
+    settings.fields.environment &&
+    box.environment
+  ){
+    labels.push("Environment: " + box.environment);
+  }
+
+
+  if(
+    settings.fields.context &&
+    box.context
+  ){
+    labels.push("Context: " + box.context);
+  }
+
+
+  if(settings.fields.id){
+
+    labels.push(
+      "ID: " + box.id
+    );
+
+  }
+
+
+  return labels;
+
+}
+
+
+// ==========================
+// Label Position
+// ==========================
+
+function getLabelPosition(box, position, ctx, text){
+
+switch(position){
+
+case "top-left":
+
+return {
+ x: box.x,
+ y: box.y - 10
+};
+
+
+case "top-right":
+
+return {
+ x: box.x + box.width - ctx.measureText(text).width,
+ y: box.y - 10
+};
+
+
+case "center":
+
+return {
+ x: box.x + 10,
+ y: box.y + (box.height / 2)
+};
+
+case "bottom":
+
+return {
+ x: box.x,
+ y: box.y + box.height + 20
+};
+
+
+default:
+
+return {
+ x: box.x,
+ y: box.y - 10
+};
+
+}
+
+}
+  // ==========================
   // Draw Canvas
   // ==========================
   const drawCanvas = () => {
@@ -412,7 +571,40 @@ if (isMoving) {
         box.width,
         box.height
     );
+    // ==========================
+// Draw Annotation Label
+// ==========================
 
+const labels = getLabelText(
+    box,
+    labelSettings
+);
+
+labels.forEach((text,index)=>{
+
+
+ctx.font = "14px Arial";
+ctx.fillStyle = "red";
+
+
+const labelPosition = getLabelPosition(
+    box,
+    labelSettings.position,
+    ctx,
+    labels[0]
+);
+
+
+// Same X position for all labels
+
+ctx.fillText(
+    text,
+    labelPosition.x,
+    labelPosition.y + (index * 18)
+);
+
+
+});
 
     // Draw Resize Handles
     if(index === selectedIndex){
@@ -579,10 +771,7 @@ if(
 
   e.preventDefault();
 
-  localStorage.setItem(
-    "annotations",
-    JSON.stringify(annotations)
-  );
+  saveAnnotations(videoId, annotations);
 
   console.log("Annotations Saved");
 
@@ -677,14 +866,6 @@ if(
 
 }
 
-      setAnnotations(prev =>
-        prev.filter(
-          (_, index) => index !== selectedIndex
-        )
-      );
-
-
-      setSelectedIndex(-1);
 
     }
 
@@ -715,7 +896,11 @@ if(
    drawCanvas();
    }, [annotations, currentBox, selectedIndex]);
 
+  useEffect(() => {
 
+  saveAnnotations(videoId, annotations);
+
+}, [annotations, videoId]);
 
   useEffect(() => {
   if (!canvasRef.current) return;

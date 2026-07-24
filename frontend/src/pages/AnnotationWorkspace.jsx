@@ -1,9 +1,13 @@
+import { AnnotationProvider } from "../components/Annotation/AnnotationContext";
+import { useState } from "react";
 import Sidebar from "../components/Sidebar/Sidebar";
 import VideoPlayer from "../components/VideoPlayer/VideoPlayer";
 import "../styles/annotation.css";
+import AnnotationProperties from "../components/Annotation/AnnotationProperties";
 
 function AnnotationWorkspace({
   video,
+  originalVideoUrl,
   setVideo,
   uploadVideo,
   result,
@@ -11,8 +15,31 @@ function AnnotationWorkspace({
   uploadStatus,
   processedVideo,
 }) {
+
+  const [annotations, setAnnotations] = useState([]);
+
+  const [selectedAnnotation, setSelectedAnnotation] = useState(null);
+ // ==========================
+// Label Display Settings
+// ==========================
+
+const [labelSettings, setLabelSettings] = useState({
+
+  fields:{
+    objectName:true,
+    status:false,
+    environment:false,
+    context:false,
+    id:false
+  },
+
+  position:"top-left"
+
+});
+
   return (
-    <div className="workspace">
+    <AnnotationProvider>
+      <div className="workspace">
 
       {/* Header */}
       <header className="header">
@@ -47,8 +74,17 @@ function AnnotationWorkspace({
         <main className="viewer-panel">
           <VideoPlayer
   video={video}
+  originalVideoUrl={originalVideoUrl}
   result={result}
   processedVideo={processedVideo}
+
+  annotations={annotations}
+  setAnnotations={setAnnotations}
+
+  selectedAnnotation={selectedAnnotation}
+  setSelectedAnnotation={setSelectedAnnotation}
+
+  labelSettings={labelSettings}
 />
         </main>
 
@@ -119,6 +155,23 @@ function AnnotationWorkspace({
             )}
 
           </div>
+          <hr />
+
+            <AnnotationProperties
+
+              selectedAnnotation={selectedAnnotation}
+
+              annotations={annotations}
+
+              setAnnotations={setAnnotations}
+
+              setSelectedAnnotation={setSelectedAnnotation}
+
+              labelSettings={labelSettings}
+
+              setLabelSettings={setLabelSettings}
+
+            />
 
         </aside>
 
@@ -130,12 +183,13 @@ function AnnotationWorkspace({
       </div>
 
       {/* Status */}
-      <footer className="statusbar">
+            <footer className="statusbar">
         {uploadStatus}
       </footer>
 
     </div>
-  );
+  </AnnotationProvider>
+);
 }
 
 export default AnnotationWorkspace;

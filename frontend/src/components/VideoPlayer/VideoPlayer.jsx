@@ -3,13 +3,30 @@ import VideoControls from "./VideoControls";
 import AnnotationCanvas from "../Annotation/AnnotationCanvas";
 import "./VideoPlayer.css";
 
-function VideoPlayer({ video, processedVideo }) {
+function VideoPlayer({
+  video,
+  originalVideoUrl,
+  processedVideo,
+
+  annotations,
+  setAnnotations,
+
+  selectedAnnotation,
+  setSelectedAnnotation,
+
+  labelSettings,
+}) {
+
   const videoRef = useRef(null);
+
   const [videoSize, setVideoSize] = useState({
   width: 640,
   height: 360,
 });
-
+  
+  useEffect(() => {
+  console.log("Selected Annotation:", selectedAnnotation);
+}, [selectedAnnotation]);
   const [showProcessed, setShowProcessed] = useState(false);
 
   const [isPlaying, setIsPlaying] = useState(false);
@@ -25,18 +42,27 @@ function VideoPlayer({ video, processedVideo }) {
 
   // Create URL for uploaded video
   const originalVideoURL = useMemo(() => {
-    if (!video) return "";
+
+  if (video) {
     return URL.createObjectURL(video);
-  }, [video]);
+  }
+
+  if (originalVideoUrl) {
+    return originalVideoUrl;
+  }
+
+  return "";
+
+}, [video, originalVideoUrl]);
 
   // Cleanup Blob URL
   useEffect(() => {
-    return () => {
-      if (originalVideoURL) {
-        URL.revokeObjectURL(originalVideoURL);
-      }
-    };
-  }, [originalVideoURL]);
+  return () => {
+    if (video && originalVideoURL) {
+      URL.revokeObjectURL(originalVideoURL);
+    }
+  };
+}, [video, originalVideoURL]);
 
   // ✅ Playback Speed Apply
   useEffect(() => {
@@ -310,9 +336,34 @@ const handleLoadedMetadata = () => {
   width={videoSize.width}
   height={videoSize.height}
   video={video}
+
+  annotations={annotations}
+  setAnnotations={setAnnotations}
+
+  selectedAnnotation={selectedAnnotation}
+  setSelectedAnnotation={setSelectedAnnotation}
+
+  labelSettings={labelSettings}
 />
 
 </div>
+
+{/* Temporary Debug Panel */}
+{selectedAnnotation && (
+  <div
+    style={{
+      marginTop: "10px",
+      padding: "10px",
+      background: "#222",
+      color: "white",
+      border: "1px solid #555",
+    }}
+  >
+    <div><b>ID:</b> {selectedAnnotation.id}</div>
+    <div><b>Type:</b> {selectedAnnotation.type}</div>
+    <div><b>Frame:</b> {selectedAnnotation.frame}</div>
+  </div>
+)}
 
       <VideoControls
       isPlaying={isPlaying}

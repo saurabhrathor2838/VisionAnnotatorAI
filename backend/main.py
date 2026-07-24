@@ -52,7 +52,11 @@ app.mount(
     name="outputs"
 )
 
-
+app.mount(
+    "/uploads",
+    StaticFiles(directory="uploads"),
+    name="uploads"
+)
 
 # Load AI service once
 video_service = VideoService()
@@ -140,7 +144,7 @@ async def upload_video(
         "status": "completed",
 
         "original_video":
-            str(input_path),
+    f"/uploads/{input_path.name}",
 
 
         "processed_video":

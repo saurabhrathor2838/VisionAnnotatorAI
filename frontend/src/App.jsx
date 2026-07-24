@@ -4,6 +4,7 @@ import AnnotationWorkspace from "./pages/AnnotationWorkspace";
 
 function App() {
   const [video, setVideo] = useState(null);
+  const [originalVideoUrl, setOriginalVideoUrl] = useState("");
   const [result, setResult] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState("Waiting...");
@@ -40,6 +41,9 @@ function App() {
       );
 
       const data = response.data;
+      setOriginalVideoUrl(
+  `http://127.0.0.1:8000${data.original_video}`
+);
 
 const stats = {
   totalFrames: data.detections.length,
@@ -77,14 +81,17 @@ setResult({
   return (
     <AnnotationWorkspace
   video={video}
+  originalVideoUrl={originalVideoUrl}
   setVideo={setVideo}
   uploadVideo={uploadVideo}
   result={result}
   uploadProgress={uploadProgress}
   uploadStatus={uploadStatus}
-  processedVideo={
+ processedVideo={
   result?.processed_video
-    ? `http://127.0.0.1:8000/${result.processed_video.replace(/\\/g, "/")}`
+    ? `http://127.0.0.1:8000/outputs/${result.processed_video
+        .split("\\")
+        .pop()}`
     : null
 }
 />
